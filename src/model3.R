@@ -1,18 +1,17 @@
 #!/usr/bin/R
 
 
-library(xlsx)         # to load excel sheets
+library(openxlsx)         # to load excel sheets
 library(glue)         # to format strings
+library(DescTools)
 
 
 #----------------------------
 # load in data
 #----------------------------
 
-dropbox_location = '~/Dropbox/'
-
-filename = glue('{dropbox_location}/16p12.2 project/Human patients project/WGS paper/11_Variant Integration/16p12_cohort_summary_v17.xlsx')
-df = read.xlsx(filename, sheetIndex=1, check.names=FALSE)
+filename = glue('../data/16p12_cohort_summary_v17.xlsx')
+df = read.xlsx(filename, sheet=1, check.names=FALSE)
 
 # rename rows
 rownames(df) = df$Sample
@@ -62,11 +61,11 @@ df[,col] = unlist(sapply(df[, col], numerical2binary, split_value=2))
 
 
 
-# print phenotype value counts
-for (col in pheno_cols) {
-	print(col)
-	print(table(df[,col]))
-}
+# # print phenotype value counts
+# for (col in pheno_cols) {
+# 	print(col)
+# 	print(table(df[,col]))
+# }
 
 #----------------------------
 # Prepare predictor variables
@@ -102,11 +101,10 @@ for (col in numeric_cols){
 #----------------------------
 
 
-# for each phenotypic column, fit a linear model
+# for each phenotypic column and all genetic variables together, fit a linear model
 for (col in pheno_cols) {
-	print(col)
 	formula = glue('{col} ~ Sex + SCZ_PRS + Rare_Deleterious_SNVs_LOEUF + dels_loeuf + dups_loeuf + STRs_exonic_LOEUF035')
-
+	print(formula)
 	# fit the linear model
 	mod = glm(formula, data=df, family=binomial, x=T)
 	# print(summary(mod))
@@ -130,17 +128,56 @@ for (col in pheno_cols) {
 	summ[,'model'] = 'model3'
 	num_samples = dim(mod$x)[1]
 	summ[,'Num_samples'] = num_samples
-	print(num_samples)
-	
+	# add Nagelkerke's R2
+	summ[, "R2"] = PseudoR2(mod, which="Nagelkerke")
 	# print(summ)
 	# save table
-	outfilename = glue('statistics/model3_{col}.tsv')
+	outfilename = glue('../data/statistics/model3_{col}.tsv')
 	write.table(summ, outfilename, sep='\t', row.names=F)
 	
 	
 }
 
 
+# for each phenotypic column and each genetic variable individually, fit a linear model
+for (col in pheno_cols) {
+	for (gv in numeric_cols) {
+
+		formula = glue('{col} ~ Sex + {gv}')
+		print(formula)
+
+		# fit the linear model
+		mod = glm(formula, data=df, family=binomial, x=T)
+		# print(summary(mod))
+		
+		# get beta coefficients and confidennce intervals
+		summ = confint(mod)
+		summ = cbind(summ, coef(mod))
+		
+		pvalues = coef(summary(mod))[,'Pr(>|z|)']
+		summ = cbind(summ, pvalues)
+		
+		# format output table
+		summ = data.frame(summ)
+		colnames(summ) = c('2.5% C.I.', '97.5% C.I.', 'Log Odds Ratio', 'P-value')
+		summ[,'Variable'] = rownames(summ)
+		cols = c('Variable', 'Log Odds Ratio', '2.5% C.I.', '97.5% C.I.', 'P-value')
+		summ = summ[,cols]
+		
+		summ[,'Test'] = 'Logistic regression'
+		summ[,'metric'] = 'Log odds ratio'
+		summ[,'model'] = 'model3'
+		num_samples = dim(mod$x)[1]
+		summ[,'Num_samples'] = num_samples
+		# add Nagelkerke's R2
+		summ[, "R2"] = PseudoR2(mod, which="Nagelkerke")
+		# print(summ)
+		# save table
+		outfilename = glue('../data/statistics/model3_{col}_{gv}.tsv')
+		write.table(summ, outfilename, sep='\t', row.names=F)
+	}
+
+}
 
 
 

@@ -1,0 +1,4 @@
+"Variable"	"Log Odds Ratio"	"2.5% C.I."	"97.5% C.I."	"P-value"	"Test"	"metric"	"model"	"Num_samples"	"R2"
+"(Intercept)"	-0.764686457701267	-1.81237259934551	0.166573779719947	0.122120487323089	"Logistic regression"	"Log odds ratio"	"model3"	58	0.0226015023732517
+"Sex"	0.520168264485929	-0.613103675111115	1.73268696736343	0.37887325658637	"Logistic regression"	"Log odds ratio"	"model3"	58	0.0226015023732517
+"STRs_exonic_LOEUF035"	0.137335200038469	-0.477172236233737	0.761574129618655	0.659821205358499	"Logistic regression"	"Log odds ratio"	"model3"	58	0.0226015023732517
