@@ -1,8 +1,9 @@
 #!/usr/bin/R
 
 
-library(xlsx)         # to load excel sheets
+library(openxlsx)         # to load excel sheets
 library(glue)         # to format strings
+library(DescTools)
 
 
 #----------------------------
@@ -10,8 +11,19 @@ library(glue)         # to format strings
 #----------------------------
 
 
+filename = glue('../data/SVIP.csv')
+
+
+#----------------------------
+# Prepare phenotypes
+#----------------------------
 
 pheno_cols = c('Full-scale IQ','ABCL_CBCL external','ABCL_CBCL internal','SRS raw','BSI','BMI Z-score','Head circumference Z-score')
+
+#----------------------------
+# Prepare predictor variables
+#----------------------------
+
 binary_cols  = c('Sex')
 numeric_cols = c('Rare_Deleterious_SNVs', 'Rare_Deleterious_SNVs_LOEUF', 'Genes DEL', 'DELs LOEUF<0.35', 'Genes DUP', 'DUPs LOEUF<0.35', 'SCZ_PRS', 'intelligence_PRS', 'educational_attainment_PRS', 'autism_PRS')
 other_numeric = c('Missense CADD>25', 'LOF CADD25_NA', 'Splice CADD25', 'Genes DEL', 'Genes DUP')
@@ -26,7 +38,7 @@ linear_regression = function(df, formula, outfilename) {
 	# fit the linear model
 	mod = lm(formula, data=df)
 	
-	# get beta coefficients and confidennce intervals
+	# get beta coefficients and confidence intervals
 	summ = confint(mod)
 	summ = cbind(summ, coef(mod))
 	
@@ -45,15 +57,16 @@ linear_regression = function(df, formula, outfilename) {
 	# get number of observations
 	num_observations = nobs(mod)
 	summ['Num_samples'] = num_observations
-	
-	# save table	
+	# add Nagelkerke's R2
+	summ[, "R2"] = PseudoR2(mod, which="Nagelkerke")
+
+	# save table
 	write.table(summ, outfilename, sep='\t', row.names=F)
 }
 
 
 
 for (cohort in cohorts) {
-	filename = glue('../1_variant_preperation/SVIP.csv')
 	df = read.csv(filename, check.names=F)
 	df = df[df[,'Family type'] == cohort,]
 	colnames(df) = gsub('/', '_', colnames(df))
@@ -80,43 +93,64 @@ for (cohort in cohorts) {
 	print('MODEL 1')
 	# for each phenotypic column, fit a linear model
 	for (col in pheno_cols) {
-		print(col)
 
 		formula = glue('`{col}` ~ Sex + SCZ_PRS + All_rare_del_var')
-		outfilename = glue('statistics/{cohort}_{col}_model1.tsv')
+		outfilename = glue('../data/statistics/model1_{cohort}_{col}.tsv')
 		linear_regression(df, formula, outfilename)
 
 	}
-	
-	print('MODEL 2')
+	# for each phenotypic column and each genetic variable, fit a linear model
+	model1_gvs = c('SCZ_PRS', 'All_rare_del_var')
 	for (col in pheno_cols) {
-		print(col)
+		for (gv in model1_gvs){
+
+			formula = glue('`{col}` ~ Sex + `{gv}`')
+			outfilename = glue('../data/statistics/model1_{cohort}_{col}_{gv}.tsv')
+			linear_regression(df, formula, outfilename)
+
+		}
+	}
+
+	print('MODEL 2')
+	model2_gv = c()
+	for (col in pheno_cols) {
 
 		formula = glue('`{col}` ~ Sex + SCZ_PRS + Rare_Deleterious_SNVs + `Genes DEL` + `Genes DUP`')
-		outfilename = glue('statistics/{cohort}_{col}_model2.tsv')
+		outfilename = glue('../data/statistics/model2_{cohort}_{col}.tsv')
 		linear_regression(df, formula, outfilename)
 
 	}
+
+	# for each phenotypic column and each genetic variable, fit a linear model
+	model2_gvs = c('SCZ_PRS', 'Rare_Deleterious_SNVs', 'Genes DEL', 'Genes DUP')
+	for (col in pheno_cols) {
+		for (gv in model2_gvs){
+
+			formula = glue('`{col}` ~ Sex + `{gv}`')
+			outfilename = glue('../data/statistics/model2_{cohort}_{col}_{gv}.tsv')
+			linear_regression(df, formula, outfilename)
+
+		}
+	}
+
 
 	print('MODEL 3')
 	for (col in pheno_cols) {
-		print(col)
 
 		formula = glue('`{col}` ~ Sex + SCZ_PRS + Rare_Deleterious_SNVs_LOEUF + `DELs LOEUF<0.35` + `DUPs LOEUF<0.35`')
-		outfilename = glue('statistics/{cohort}_{col}_model3.tsv')
+		outfilename = glue('../data/statistics/model3_{cohort}_{col}.tsv')
 		linear_regression(df, formula, outfilename)
 
 	}
+	# for each phenotypic column and each genetic variable, fit a linear model
+	model3_gvs = c('SCZ_PRS', 'Rare_Deleterious_SNVs_LOEUF', 'DELs LOEUF<0.35', 'DUPs LOEUF<0.35')
+	for (col in pheno_cols) {
+		for (gv in model3_gvs){
+
+			formula = glue('`{col}` ~ Sex + `{gv}`')
+			outfilename = glue('../data/statistics/model3_{cohort}_{col}_{gv}.tsv')
+			linear_regression(df, formula, outfilename)
+
+		}
+	}
 }
-
-
-
-
-
-
-
-	
-	
-	
-	
-	
