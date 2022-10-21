@@ -1,0 +1,4 @@
+"Variable"	"Log Odds Ratio"	"2.5% C.I."	"97.5% C.I."	"P-value"	"Test"	"metric"	"Num_samples"	"R2"
+"(Intercept)"	0.210216592755464	-0.923830176820488	1.34426336233142	0.702342857877998	"Linear regression"	"Beta coefficient"	22	-0.078509443841746
+"Sex"	-0.297520572853083	-1.55989581688742	0.96485467118125	0.627460583942771	"Linear regression"	"Beta coefficient"	22	-0.078509443841746
+"Rare_Deleterious_SNVs"	-0.0771683090852085	-0.575517467977793	0.421180849807376	0.749402793272185	"Linear regression"	"Beta coefficient"	22	-0.078509443841746

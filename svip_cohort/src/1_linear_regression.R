@@ -10,7 +10,6 @@ library(DescTools)
 # load in data
 #----------------------------
 
-
 filename = glue('../data/SVIP.csv')
 
 
@@ -30,7 +29,6 @@ other_numeric = c('Missense CADD>25', 'LOF CADD25_NA', 'Splice CADD25', 'Genes D
 
 
 cohorts = c('16p-deletion', '16p-duplication')
-
 variant_cols = c('Missense CADD>25', 'LOF CADD25_NA', 'LOF CADD LOEUF<0.35', 'Splice CADD25', 'Splice CADD25 LOEUF<0.35', 'Rare_Deleterious_SNVs', 'Rare_Deleterious_SNVs_LOEUF', 'Genes DEL', 'Genes DUP', 'DELs LOEUF<0.35', 'DUPs LOEUF<0.35', 'SCZ_PRS', 'intelligence_PRS', 'educational_attainment_PRS', 'autism_PRS')
 
 
@@ -57,8 +55,8 @@ linear_regression = function(df, formula, outfilename) {
 	# get number of observations
 	num_observations = nobs(mod)
 	summ['Num_samples'] = num_observations
-	# add Nagelkerke's R2
-	summ[, "R2"] = PseudoR2(mod, which="Nagelkerke")
+	# add R2
+	summ[, "R2"] = summary(mod)$adj.r.squared
 
 	# save table
 	write.table(summ, outfilename, sep='\t', row.names=F)
@@ -112,7 +110,6 @@ for (cohort in cohorts) {
 	}
 
 	print('MODEL 2')
-	model2_gv = c()
 	for (col in pheno_cols) {
 
 		formula = glue('`{col}` ~ Sex + SCZ_PRS + Rare_Deleterious_SNVs + `Genes DEL` + `Genes DUP`')
