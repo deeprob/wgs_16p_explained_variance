@@ -49,7 +49,7 @@ linear_regression = function(df, formula, outfilename) {
 	num_observations = nobs(mod)
 	summ['Num_samples'] = num_observations
 	# add R2
-	summ[, "R2"] = summary(mod)$adj.r.squared
+	summ[, "R2"] = summary(mod)$r.squared
 	
 	# save table	
 	write.table(summ, outfilename, sep='\t', row.names=F)
